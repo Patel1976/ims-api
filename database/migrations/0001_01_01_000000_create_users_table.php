@@ -16,9 +16,12 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('username')->unique();
+            $table->string('password');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
+            $table->string('phone')->nullable();
+            $table->string('role')->default('user');
+            $table->string('image')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
@@ -44,6 +47,7 @@ return new class extends Migration
             'username' => 'inventory-admin',
             'email' => 'harshpatel120403@gmail.com',
             'password' => bcrypt('Umiya@2003.'),
+            'role' => 'super-admin',
         ]);
     }
 
