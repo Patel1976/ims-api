@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\StoreController;
+use App\Http\Controllers\Api\ProductController;
 
 Route::prefix('admin')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
@@ -36,4 +37,10 @@ Route::middleware([JwtMiddleware::class])->prefix('admin')->group(function () {
     Route::post('/create-store', [StoreController::class, 'createStore']);
     Route::put('/update-store/{id}', [StoreController::class, 'updateStore']);
     Route::delete('/delete-store/{id}', [StoreController::class, 'deleteStore']);
+    // Product Routes
+    Route::get('/products', [ProductController::class, 'getAllProducts']);
+    Route::get('/view-products/{id}', [ProductController::class, 'viewProduct']);
+    Route::post('/create-product', [ProductController::class, 'createProduct']);
+    Route::post('/update-product/{id}', [ProductController::class, 'updateProduct']);
+    Route::delete('/delete-product/{id}', [ProductController::class, 'deleteProduct']);
 });
