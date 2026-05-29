@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Supplier;
 use App\Http\Controllers\Controller;
+use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -40,11 +41,8 @@ class SupplierController extends Controller
             'opening_balance' => $request->opening_balance,
         ]);
 
-        return response()->json([
-            'success' => 1,
-            'message' => 'Supplier created successfully',
-            'data' => $supplier
-        ], 201);
+        ActivityLogService::log('Add', 'Suppliers', "Added new supplier \"{$supplier->name}\"");
+        return response()->json(['success' => 1, 'message' => 'Supplier created successfully', 'data' => $supplier], 201);
     }
 
     public function updateSupplier(Request $request, $id){
@@ -73,11 +71,8 @@ class SupplierController extends Controller
             'name','company','email','phone','taxNumber','status','address','opening_balance'
         ]));
 
-        return response()->json([
-            'success' => 1,
-            'message' => 'Supplier updated successfully',
-            'data' => $supplier
-        ], 200);
+        ActivityLogService::log('Edit', 'Suppliers', "Updated supplier \"{$supplier->name}\"");
+        return response()->json(['success' => 1, 'message' => 'Supplier updated successfully', 'data' => $supplier], 200);
     }
 
     public function viewSupplier($id){
@@ -105,11 +100,9 @@ class SupplierController extends Controller
             ], 404);
         }
 
+        $name = $supplier->name;
         $supplier->delete();
-
-        return response()->json([
-            'success' => 1,
-            'message' => 'Supplier deleted successfully'
-        ], 200);
+        ActivityLogService::log('Delete', 'Suppliers', "Deleted supplier \"{$name}\"");
+        return response()->json(['success' => 1, 'message' => 'Supplier deleted successfully'], 200);
     }
 }

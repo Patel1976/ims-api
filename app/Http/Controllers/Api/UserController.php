@@ -29,8 +29,9 @@ class UserController extends Controller
             'email' => 'required|string|email|unique:users',
             'password' => 'required|string|min:6',
             'phone' => 'nullable|string',
-            'role'     => 'required|in:admin,staff,user',
+            'role'     => 'required|in:admin,manager,staff,user',
             'image' => 'nullable|image|max:2048',
+            'status'   => 'nullable|in:Active,Inactive',
         ]);
 
         $imagePath = null;
@@ -46,6 +47,7 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
             'phone' => $request->phone,
             'role' => $request->role,
+            'status' => $request->status ?? 'Active',
             'image' => $imagePath,
         ]);
 
@@ -76,8 +78,9 @@ class UserController extends Controller
             'email' => ['sometimes','required','string','email',Rule::unique('users')->ignore($user->id)],
             'password' => 'sometimes|nullable|string|min:6',
             'phone' => 'nullable|string',
-            'role'     => 'sometimes|required|in:admin,staff,user',
+            'role'     => 'sometimes|required|in:admin,manager,staff,user',
             'image' => 'nullable|image|max:2048',
+            'status'   => 'nullable|in:Active,Inactive',
         ]);
 
         if ($request->hasFile('image')) {
@@ -91,7 +94,7 @@ class UserController extends Controller
             $user->password = Hash::make($request->password);
         }
 
-        $user->fill($request->only(['name', 'username', 'email', 'phone', 'role']));
+        $user->fill($request->only(['name', 'username', 'email', 'phone', 'role', 'status']));
         $user->save();
 
         return response()->json([

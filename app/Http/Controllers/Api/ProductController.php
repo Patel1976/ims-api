@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Product;
 use App\Http\Controllers\Controller;
+use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -11,7 +12,10 @@ class ProductController extends Controller
 {
     public function getAllProducts()
     {
-        $products = Product::all();
+        $products = Product::all()->map(function ($product) {
+            $product->image = $product->image ? asset('storage/' . $product->image) : null;
+            return $product;
+        });
         return response()->json(['success' => 1, 'data' => $products], 200);
     }
 
@@ -52,6 +56,8 @@ class ProductController extends Controller
             'image'          => $imagePath,
         ]);
 
+        ActivityLogService::log('Add', 'Products', "Added new product \"{$product->name}\"");
+        $product->image = $product->image ? asset('storage/' . $product->image) : null;
         return response()->json(['success' => 1, 'message' => 'Product created successfully', 'data' => $product], 201);
     }
 
@@ -92,6 +98,8 @@ class ProductController extends Controller
             $product->save();
         }
 
+        ActivityLogService::log('Edit', 'Products', "Updated product \"{$product->name}\"");
+        $product->image = $product->image ? asset('storage/' . $product->image) : null;
         return response()->json(['success' => 1, 'message' => 'Product updated successfully', 'data' => $product], 200);
     }
 
@@ -112,8 +120,9 @@ class ProductController extends Controller
             return response()->json(['success' => 0, 'message' => 'Product not found'], 404);
         }
 
+        $name = $product->name;
         $product->delete();
-
+        ActivityLogService::log('Delete', 'Products', "Deleted product \"{$name}\"");
         return response()->json(['success' => 1, 'message' => 'Product deleted successfully'], 200);
     }
 }

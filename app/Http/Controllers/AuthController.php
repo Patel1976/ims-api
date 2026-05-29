@@ -36,10 +36,12 @@ class AuthController extends Controller
     // Login
     public function login(Request $request)
     {
-        $credentials = $request->only('username', 'password');
+        $credentials = $request->only('username', 'email', 'password');
 
         try {
-            $user = \App\Models\User::where('username', $credentials['username'])->first();
+            $user = \App\Models\User::where('username', $credentials['username'] ?? $credentials['email'] ?? null)
+                ->orWhere('email', $credentials['email'] ?? null)
+                ->first();
             if (!$user) {
                 return response()->json([
                     'success' => 0,
@@ -47,7 +49,7 @@ class AuthController extends Controller
                     'message' => 'Validation failed',
                     'data' => [
                         'errors' => [
-                            'username' => ['Username is incorrect.']
+                            'username' => ['Username or email is incorrect.']
                         ]
                     ]
                 ], 401);
@@ -85,6 +87,50 @@ class AuthController extends Controller
         } catch (\Throwable $e) {
             return response()->json("Login Failed " . $e->getMessage(), 500);
         }
+    }
+
+    // Get authenticated user profile
+    public function profile()
+    {
+        $user = Auth::user();
+        return response()->json([
+            'success' => 1,
+            'data' => $user
+        ]);
+    }
+
+    // Update authenticated user profile
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'name'     => 'sometimes|required|string',
+            'email'    => 'sometimes|required|email|unique:users,email,' . $user->id,
+            'phone'    => 'nullable|string',
+            'password' => 'sometimes|nullable|string|min:6',
+            'image'    => 'nullable|image|max:2048',
+        ]);
+
+        if ($request->hasFile('image')) {
+            if ($user->image) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->image);
+            }
+            $user->image = $request->file('image')->store('uploads/users', 'public');
+        }
+
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+        }
+
+        $user->fill($request->only(['name', 'email', 'phone']));
+        $user->save();
+
+        return response()->json([
+            'success' => 1,
+            'message' => 'Profile updated successfully',
+            'data'    => $user
+        ]);
     }
 
     // Logout

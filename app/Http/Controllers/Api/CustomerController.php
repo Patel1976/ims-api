@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Customer;
 use App\Http\Controllers\Controller;
+use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -40,11 +41,8 @@ class CustomerController extends Controller
             'opening_balance' => $request->opening_balance,
         ]);
 
-        return response()->json([
-            'success' => 1,
-            'message' => 'Customer created successfully',
-            'data' => $customer
-        ], 201);
+        ActivityLogService::log('Add', 'Customers', "Added new customer \"{$customer->name}\"");
+        return response()->json(['success' => 1, 'message' => 'Customer created successfully', 'data' => $customer], 201);
     }
 
     public function updateCustomer(Request $request, $id){
@@ -73,11 +71,8 @@ class CustomerController extends Controller
             'name', 'email', 'phone', 'city', 'country', 'status', 'address', 'opening_balance'
         ]));
 
-        return response()->json([
-            'success' => 1,
-            'message' => 'Customer updated successfully',
-            'data' => $customer
-        ], 200);
+        ActivityLogService::log('Edit', 'Customers', "Updated customer \"{$customer->name}\"");
+        return response()->json(['success' => 1, 'message' => 'Customer updated successfully', 'data' => $customer], 200);
     }
 
     public function viewCustomer($id){
@@ -105,11 +100,9 @@ class CustomerController extends Controller
             ], 404);
         }
 
+        $name = $customer->name;
         $customer->delete();
-
-        return response()->json([
-            'success' => 1,
-            'message' => 'Customer deleted successfully'
-        ], 200);
+        ActivityLogService::log('Delete', 'Customers', "Deleted customer \"{$name}\"");
+        return response()->json(['success' => 1, 'message' => 'Customer deleted successfully'], 200);
     }
 }
