@@ -36,56 +36,55 @@ class AuthController extends Controller
     // Login
     public function login(Request $request)
     {
-        $credentials = $request->only('username', 'email', 'password');
+        $request->validate([
+            'identifier' => 'required|string',
+            'password'   => 'required|string',
+        ]);
+
+        $identifier = $request->identifier;
 
         try {
-            $user = \App\Models\User::where('username', $credentials['username'] ?? $credentials['email'] ?? null)
-                ->orWhere('email', $credentials['email'] ?? null)
+            $user = User::where('email', $identifier)
+                ->orWhere('username', $identifier)
                 ->first();
+
             if (!$user) {
                 return response()->json([
                     'success' => 0,
-                    'error' => 1,
+                    'error'   => 1,
                     'message' => 'Validation failed',
-                    'data' => [
-                        'errors' => [
-                            'username' => ['Username or email is incorrect.']
-                        ]
-                    ]
+                    'data'    => ['errors' => ['identifier' => ['Username or email is incorrect.']]]
                 ], 401);
             }
-            if (!Hash::check($credentials['password'], $user->password)) {
+
+            if (!Hash::check($request->password, $user->password)) {
                 return response()->json([
                     'success' => 0,
-                    'error' => 1,
+                    'error'   => 1,
                     'message' => 'Validation failed',
-                    'data' => [
-                        'errors' => [
-                            'password' => ['Password is incorrect.']
-                        ]
-                    ]
+                    'data'    => ['errors' => ['password' => ['Password is incorrect.']]]
                 ], 401);
             }
+
             $token = JWTAuth::fromUser($user);
             if (!$token) {
                 return response()->json([
                     'success' => 0,
-                    'error' => 1,
+                    'error'   => 1,
                     'message' => 'Failed to generate token',
-                    'data' => null
+                    'data'    => null
                 ], 500);
             }
+
             return response()->json([
                 'success' => 1,
-                'error' => 0,
+                'error'   => 0,
                 'message' => 'Login Success',
-                'data' => [
-                    'token' => $token,
-                    'userData' => $user,
-                ]
+                'data'    => ['token' => $token, 'userData' => $user]
             ], 200);
+
         } catch (\Throwable $e) {
-            return response()->json("Login Failed " . $e->getMessage(), 500);
+            return response()->json('Login Failed ' . $e->getMessage(), 500);
         }
     }
 

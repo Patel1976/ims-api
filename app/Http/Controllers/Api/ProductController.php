@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Product;
+use App\Models\Category;
+use App\Models\Brand;
 use App\Http\Controllers\Controller;
 use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
@@ -10,10 +12,39 @@ use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
 {
+    /**
+     * Resolve category/brand: accept either an ID (integer string) or a name string.
+     * Always stores the name in the products table (matching the Category/Brand model relationship).
+     */
+    private function resolveCategoryName($value): ?string
+    {
+        if (!$value) return null;
+        if (is_numeric($value)) {
+            $cat = Category::find((int) $value);
+            return $cat ? $cat->name : null;
+        }
+        return $value;
+    }
+
+    private function resolveBrandName($value): ?string
+    {
+        if (!$value) return null;
+        if (is_numeric($value)) {
+            $brand = Brand::find((int) $value);
+            return $brand ? $brand->name : null;
+        }
+        return $value;
+    }
+
     public function getAllProducts()
     {
-        $products = Product::all()->map(function ($product) {
-            $product->image = $product->image ? asset('storage/' . $product->image) : null;
+        $categories = Category::pluck('id', 'name'); // ['Electronics' => 1, ...]
+        $brands     = Brand::pluck('id', 'name');
+
+        $products = Product::all()->map(function ($product) use ($categories, $brands) {
+            $product->image       = $product->image ? asset('storage/' . $product->image) : null;
+            $product->category_id = $categories[$product->category] ?? null;
+            $product->brand_id    = $brands[$product->brand] ?? null;
             return $product;
         });
         return response()->json(['success' => 1, 'data' => $products], 200);
@@ -24,8 +55,8 @@ class ProductController extends Controller
         $request->validate([
             'name'           => 'required|string',
             'sku'            => 'required|string|unique:products',
-            'category'       => 'required|string',
-            'brand'          => 'nullable|string',
+            'category_id'    => 'required',
+            'brand_id'       => 'nullable',
             'unit'           => 'nullable|string',
             'purchase_price' => 'required|numeric',
             'selling_price'  => 'required|numeric',
@@ -36,6 +67,13 @@ class ProductController extends Controller
             'image'          => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
         ]);
 
+        $categoryName = $this->resolveCategoryName($request->category_id ?? $request->category);
+        $brandName    = $this->resolveBrandName($request->brand_id ?? $request->brand);
+
+        if (!$categoryName) {
+            return response()->json(['success' => 0, 'message' => 'Invalid category'], 422);
+        }
+
         $imagePath = null;
         if ($request->hasFile('image')) {
             $imagePath = $request->file('image')->store('uploads/products', 'public');
@@ -44,8 +82,8 @@ class ProductController extends Controller
         $product = Product::create([
             'name'           => $request->name,
             'sku'            => $request->sku,
-            'category'       => $request->category,
-            'brand'          => $request->brand,
+            'category'       => $categoryName,
+            'brand'          => $brandName,
             'unit'           => $request->unit,
             'purchase_price' => $request->purchase_price,
             'selling_price'  => $request->selling_price,
@@ -71,8 +109,8 @@ class ProductController extends Controller
         $request->validate([
             'name'           => 'required|string',
             'sku'            => ['required', 'string', Rule::unique('products')->ignore($id)],
-            'category'       => 'required|string',
-            'brand'          => 'nullable|string',
+            'category_id'    => 'required',
+            'brand_id'       => 'nullable',
             'unit'           => 'nullable|string',
             'purchase_price' => 'required|numeric',
             'selling_price'  => 'required|numeric',
@@ -83,18 +121,32 @@ class ProductController extends Controller
             'image'          => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
         ]);
 
+        $categoryName = $this->resolveCategoryName($request->category_id ?? $request->category);
+        $brandName    = $this->resolveBrandName($request->brand_id ?? $request->brand);
+
+        if (!$categoryName) {
+            return response()->json(['success' => 0, 'message' => 'Invalid category'], 422);
+        }
+
         if ($request->hasFile('image')) {
             $product->image = $request->file('image')->store('uploads/products', 'public');
         }
 
-        $product->update($request->only([
-            'name', 'sku', 'category', 'brand', 'unit',
-            'purchase_price', 'selling_price', 'quantity',
-            'alert_quantity', 'tax', 'description',
-        ]));
+        $product->update([
+            'name'           => $request->name,
+            'sku'            => $request->sku,
+            'category'       => $categoryName,
+            'brand'          => $brandName,
+            'unit'           => $request->unit,
+            'purchase_price' => $request->purchase_price,
+            'selling_price'  => $request->selling_price,
+            'quantity'       => $request->quantity,
+            'alert_quantity' => $request->alert_quantity,
+            'tax'            => $request->tax,
+            'description'    => $request->description,
+        ]);
 
         if ($request->hasFile('image')) {
-            $product->image = $request->file('image')->store('uploads/products', 'public');
             $product->save();
         }
 
@@ -109,6 +161,10 @@ class ProductController extends Controller
         if (!$product) {
             return response()->json(['success' => 0, 'message' => 'Product not found'], 404);
         }
+
+        $product->image       = $product->image ? asset('storage/' . $product->image) : null;
+        $product->category_id = Category::where('name', $product->category)->value('id');
+        $product->brand_id    = Brand::where('name', $product->brand)->value('id');
 
         return response()->json(['success' => 1, 'message' => 'Product retrieved successfully', 'data' => $product], 200);
     }

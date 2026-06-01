@@ -21,9 +21,14 @@ use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\DashboardController;
 
+use App\Http\Controllers\Api\PasswordResetController;
+
 Route::prefix('admin')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/forgot-password', [PasswordResetController::class, 'forgotPassword']);
+    Route::post('/validate-reset-token', [PasswordResetController::class, 'validateToken']);
+    Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']);
 });
 
 Route::middleware([JwtMiddleware::class])->prefix('admin')->group(function () {
