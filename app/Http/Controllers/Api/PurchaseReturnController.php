@@ -14,13 +14,13 @@ class PurchaseReturnController extends Controller
 {
     public function getAllPurchaseReturns()
     {
-        $returns = PurchaseReturn::with(['purchase', 'product'])->get();
+        $returns = PurchaseReturn::with(['purchase.supplier', 'product'])->get();
         return response()->json(['success' => 1, 'data' => $returns], 200);
     }
 
     public function viewPurchaseReturn($id)
     {
-        $return = PurchaseReturn::with(['purchase', 'product'])->find($id);
+        $return = PurchaseReturn::with(['purchase.supplier', 'product'])->find($id);
         if (!$return) {
             return response()->json(['success' => 0, 'message' => 'Purchase return not found'], 404);
         }
@@ -58,7 +58,7 @@ class PurchaseReturnController extends Controller
             }
 
             DB::commit();
-            return response()->json(['success' => 1, 'message' => 'Purchase return created successfully', 'data' => $purchaseReturn->load(['purchase', 'product'])], 201);
+            return response()->json(['success' => 1, 'message' => 'Purchase return created successfully', 'data' => $purchaseReturn->load(['purchase.supplier', 'product'])], 201);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['success' => 0, 'message' => 'Failed to create purchase return', 'error' => $e->getMessage()], 500);
@@ -100,7 +100,7 @@ class PurchaseReturnController extends Controller
             }
 
             DB::commit();
-            return response()->json(['success' => 1, 'message' => 'Purchase return updated successfully', 'data' => $purchaseReturn->load(['purchase', 'product'])], 200);
+            return response()->json(['success' => 1, 'message' => 'Purchase return updated successfully', 'data' => $purchaseReturn->load(['purchase.supplier', 'product'])], 200);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['success' => 0, 'message' => 'Failed to update purchase return', 'error' => $e->getMessage()], 500);

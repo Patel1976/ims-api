@@ -19,7 +19,7 @@ class PurchaseReturn extends Model
 
     public function purchase()
     {
-        return $this->belongsTo(Purchase::class);
+        return $this->belongsTo(Purchase::class)->with('supplier');
     }
 
     public function product()

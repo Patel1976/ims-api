@@ -12,13 +12,13 @@ class SaleReturnController extends Controller
 {
     public function getAllSaleReturns()
     {
-        $returns = SaleReturn::with(['sale', 'product'])->get();
+        $returns = SaleReturn::with(['sale.customer', 'product'])->get();
         return response()->json(['success' => 1, 'data' => $returns], 200);
     }
 
     public function viewSaleReturn($id)
     {
-        $return = SaleReturn::with(['sale', 'product'])->find($id);
+        $return = SaleReturn::with(['sale.customer', 'product'])->find($id);
         if (!$return) {
             return response()->json(['success' => 0, 'message' => 'Sale return not found'], 404);
         }
@@ -56,7 +56,7 @@ class SaleReturnController extends Controller
             }
 
             DB::commit();
-            return response()->json(['success' => 1, 'message' => 'Sale return created successfully', 'data' => $saleReturn->load(['sale', 'product'])], 201);
+            return response()->json(['success' => 1, 'message' => 'Sale return created successfully', 'data' => $saleReturn->load(['sale.customer', 'product'])], 201);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['success' => 0, 'message' => 'Failed to create sale return', 'error' => $e->getMessage()], 500);
@@ -98,7 +98,7 @@ class SaleReturnController extends Controller
             }
 
             DB::commit();
-            return response()->json(['success' => 1, 'message' => 'Sale return updated successfully', 'data' => $saleReturn->load(['sale', 'product'])], 200);
+            return response()->json(['success' => 1, 'message' => 'Sale return updated successfully', 'data' => $saleReturn->load(['sale.customer', 'product'])], 200);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['success' => 0, 'message' => 'Failed to update sale return', 'error' => $e->getMessage()], 500);
