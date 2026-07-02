@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\StockAdjustmentController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\SettingsController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\DashboardController;
 
 use App\Http\Controllers\Api\PasswordResetController;
@@ -132,4 +133,8 @@ Route::middleware([JwtMiddleware::class])->prefix('admin')->group(function () {
     Route::post('/settings/test-email',  [SettingsController::class, 'testEmailConnection']);
     // Dashboard Route
     Route::get('/dashboard', [DashboardController::class, 'getDashboardData']);
+    // Notification Routes
+    Route::get('/notifications', [NotificationController::class, 'getNotifications']);
+    Route::post('/notifications/mark-read', [NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
 });
