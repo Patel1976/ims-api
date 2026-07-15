@@ -1,61 +1,234 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Inventory Management API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A RESTful API built with Laravel and JWT authentication for managing inventory, sales, purchases, expenses, and more.
 
-## About Laravel
+## Requirements
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- PHP >= 8.2
+- Composer
+- MySQL / SQLite
+- Laravel 11.x
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Installation
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+```bash
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+php artisan serve
+```
 
-## Learning Laravel
+## Authentication
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+All protected routes require a Bearer JWT token in the `Authorization` header.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+```
+Authorization: Bearer <token>
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Auth Endpoints (Public)
 
-## Laravel Sponsors
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/admin/register` | Register a new admin |
+| POST | `/api/admin/login` | Login and get JWT token |
+| POST | `/api/admin/forgot-password` | Send password reset email |
+| POST | `/api/admin/validate-reset-token` | Validate reset token |
+| POST | `/api/admin/reset-password` | Reset password |
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Auth Endpoints (Protected)
 
-### Premium Partners
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/admin/logout` | Logout |
+| GET | `/api/admin/profile` | Get profile |
+| POST | `/api/admin/update-profile` | Update profile |
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+---
 
-## Contributing
+## API Endpoints
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+All endpoints below are prefixed with `/api/admin` and require JWT authentication.
 
-## Code of Conduct
+### Users
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/users` | Get all users |
+| POST | `/create-user` | Create user |
+| PUT | `/update-user/{id}` | Update user |
+| DELETE | `/delete-user/{id}` | Delete user |
 
-## Security Vulnerabilities
+### Customers
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/customers` | Get all customers |
+| GET | `/view-customers/{id}` | View customer |
+| POST | `/create-customer` | Create customer |
+| PUT | `/update-customer/{id}` | Update customer |
+| DELETE | `/delete-customer/{id}` | Delete customer |
+
+### Suppliers
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/suppliers` | Get all suppliers |
+| GET | `/view-suppliers/{id}` | View supplier |
+| POST | `/create-supplier` | Create supplier |
+| PUT | `/update-supplier/{id}` | Update supplier |
+| DELETE | `/delete-supplier/{id}` | Delete supplier |
+
+### Stores
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/stores` | Get all stores |
+| GET | `/view-stores/{id}` | View store |
+| POST | `/create-store` | Create store |
+| PUT | `/update-store/{id}` | Update store |
+| DELETE | `/delete-store/{id}` | Delete store |
+
+### Products
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/products` | Get all products |
+| GET | `/view-products/{id}` | View product |
+| POST | `/create-product` | Create product |
+| POST | `/update-product/{id}` | Update product |
+| DELETE | `/delete-product/{id}` | Delete product |
+
+### Categories
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/categories` | Get all categories |
+| GET | `/view-categories/{id}` | View category |
+| POST | `/create-category` | Create category |
+| PUT | `/update-category/{id}` | Update category |
+| DELETE | `/delete-category/{id}` | Delete category |
+
+### Brands
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/brands` | Get all brands |
+| GET | `/view-brands/{id}` | View brand |
+| POST | `/create-brand` | Create brand |
+| POST | `/update-brand/{id}` | Update brand |
+| DELETE | `/delete-brand/{id}` | Delete brand |
+
+### Purchases
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/purchases` | Get all purchases |
+| GET | `/view-purchases/{id}` | View purchase |
+| POST | `/create-purchase` | Create purchase |
+| PUT | `/update-purchase/{id}` | Update purchase |
+| DELETE | `/delete-purchase/{id}` | Delete purchase |
+
+### Purchase Returns
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/purchase-returns` | Get all purchase returns |
+| GET | `/view-purchase-returns/{id}` | View purchase return |
+| POST | `/create-purchase-return` | Create purchase return |
+| PUT | `/update-purchase-return/{id}` | Update purchase return |
+| DELETE | `/delete-purchase-return/{id}` | Delete purchase return |
+
+### Sales
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/sales` | Get all sales |
+| GET | `/view-sales/{id}` | View sale |
+| POST | `/create-sale` | Create sale |
+| PUT | `/update-sale/{id}` | Update sale |
+| DELETE | `/delete-sale/{id}` | Delete sale |
+
+### Sale Returns
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/sale-returns` | Get all sale returns |
+| GET | `/view-sale-returns/{id}` | View sale return |
+| POST | `/create-sale-return` | Create sale return |
+| PUT | `/update-sale-return/{id}` | Update sale return |
+| DELETE | `/delete-sale-return/{id}` | Delete sale return |
+
+### Expense Categories
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/expense-categories` | Get all expense categories |
+| GET | `/view-expense-categories/{id}` | View expense category |
+| POST | `/create-expense-category` | Create expense category |
+| PUT | `/update-expense-category/{id}` | Update expense category |
+| DELETE | `/delete-expense-category/{id}` | Delete expense category |
+
+### Expenses
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/expenses` | Get all expenses |
+| GET | `/view-expenses/{id}` | View expense |
+| POST | `/create-expense` | Create expense |
+| POST | `/update-expense/{id}` | Update expense |
+| DELETE | `/delete-expense/{id}` | Delete expense |
+
+### Stock Adjustments
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/adjustments` | Get all adjustments |
+| GET | `/view-adjustments/{id}` | View adjustment |
+| POST | `/create-adjustment` | Create adjustment |
+| PUT | `/update-adjustment/{id}` | Update adjustment |
+| DELETE | `/delete-adjustment/{id}` | Delete adjustment |
+
+### Reports
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/reports/sales` | Sales report |
+| GET | `/reports/purchases` | Purchase report |
+| GET | `/reports/inventory` | Inventory report |
+| GET | `/reports/customers` | Customer report |
+| GET | `/reports/suppliers` | Supplier report |
+
+### Activity Logs
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/activity-logs` | Get activity logs |
+| DELETE | `/activity-logs/clear` | Clear all activity logs |
+
+### Settings
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/settings` | Get settings |
+| PUT | `/settings` | Update settings |
+| POST | `/settings/test-email` | Test email connection |
+
+### Dashboard
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/dashboard` | Get dashboard data |
+
+### Notifications
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/notifications` | Get notifications |
+| POST | `/notifications/mark-read` | Mark notification as read |
+| POST | `/notifications/mark-all-read` | Mark all notifications as read |
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This project is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
