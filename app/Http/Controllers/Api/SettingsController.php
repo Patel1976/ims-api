@@ -44,6 +44,8 @@ class SettingsController extends Controller
             'two_factor_auth'    => 'sometimes|boolean',
             'session_timeout'    => 'sometimes|boolean',
             'login_notification' => 'sometimes|boolean',
+            // Appearance
+            'primary_color'      => 'sometimes|string|max:30',
         ]);
 
         foreach ($request->all() as $key => $value) {

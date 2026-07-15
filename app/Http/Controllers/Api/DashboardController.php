@@ -80,7 +80,7 @@ class DashboardController extends Controller
             ]);
 
         // ── Low Stock Products ────────────────────────────────────────────────
-        $lowStockProducts = Product::where('quantity', '<=', $stockAlertThreshold)
+        $lowStockProducts = Product::whereRaw('quantity <= COALESCE(alert_quantity, ?)', [$stockAlertThreshold])
             ->orderBy('quantity')
             ->limit(10)
             ->get()
@@ -89,7 +89,7 @@ class DashboardController extends Controller
                 'name'      => $p->name,
                 'category'  => $p->category,
                 'stock'     => $p->quantity,
-                'min_stock' => $stockAlertThreshold,
+                'min_stock' => $p->alert_quantity ?? $stockAlertThreshold,
                 'image'     => $p->image,
             ]);
 
@@ -109,7 +109,15 @@ class DashboardController extends Controller
             ->groupBy('products.id', 'products.name', 'products.category', 'products.image')
             ->orderByDesc('total_sold')
             ->limit(5)
-            ->get();
+            ->get()
+            ->map(fn($p) => [
+                'id'            => $p->id,
+                'name'          => $p->name,
+                'category'      => $p->category,
+                'image'         => $p->image ? asset('storage/' . $p->image) : null,
+                'total_sold'    => $p->total_sold,
+                'total_revenue' => $p->total_revenue,
+            ]);
 
         return response()->json([
             'success' => 1,

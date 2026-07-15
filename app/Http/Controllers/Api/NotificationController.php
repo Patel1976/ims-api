@@ -32,20 +32,21 @@ class NotificationController extends Controller
 
         $notifications = [];
 
-        // Low stock alerts
-        Product::where('quantity', '<=', $stockThreshold)
+        // Low stock alerts — use each product's own alert_quantity, fall back to global threshold
+        Product::whereRaw('quantity <= COALESCE(alert_quantity, ?)', [$stockThreshold])
             ->orderBy('quantity')->limit(10)->get()
             ->each(function ($product) use (&$notifications, $readKeys) {
                 $key = 'stock-' . $product->id;
                 $notifications[] = [
-                    'id'      => $key,
-                    'type'    => $product->quantity == 0 ? 'danger' : 'warning',
-                    'title'   => $product->quantity == 0 ? 'Out of Stock' : 'Low Stock Alert',
-                    'message' => $product->quantity == 0
+                    'id'         => $key,
+                    'type'       => $product->quantity == 0 ? 'danger' : 'warning',
+                    'title'      => $product->quantity == 0 ? 'Out of Stock' : 'Low Stock Alert',
+                    'message'    => $product->quantity == 0
                         ? "{$product->name} is out of stock"
-                        : "{$product->name} stock is low ({$product->quantity} units left)",
-                    'time'    => $this->timeAgo($product->updated_at),
-                    'read'    => $readKeys->has($key),
+                        : "{$product->name} stock is low ({$product->quantity} units left, alert at " . ($product->alert_quantity ?? $stockThreshold) . ")",
+                    'time'       => $this->timeAgo($product->updated_at),
+                    'created_at' => $product->updated_at?->timestamp ?? 0,
+                    'read'       => $readKeys->has($key),
                 ];
             });
 
@@ -55,13 +56,14 @@ class NotificationController extends Controller
             ->each(function ($sale) use (&$notifications, $readKeys) {
                 $key = 'sale-' . $sale->id;
                 $notifications[] = [
-                    'id'      => $key,
-                    'type'    => 'success',
-                    'title'   => 'New Sale',
-                    'message' => "Sale {$sale->reference} worth " . number_format($sale->grand_total, 2) .
-                                 " from " . ($sale->customer?->name ?? 'N/A'),
-                    'time'    => $this->timeAgo($sale->created_at),
-                    'read'    => $readKeys->has($key),
+                    'id'         => $key,
+                    'type'       => 'success',
+                    'title'      => 'New Sale',
+                    'message'    => "Sale {$sale->reference} worth " . number_format($sale->grand_total, 2) .
+                                   " from " . ($sale->customer?->name ?? 'N/A'),
+                    'time'       => $this->timeAgo($sale->created_at),
+                    'created_at' => $sale->created_at?->timestamp ?? 0,
+                    'read'       => $readKeys->has($key),
                 ];
             });
 
@@ -71,13 +73,14 @@ class NotificationController extends Controller
             ->each(function ($purchase) use (&$notifications, $readKeys) {
                 $key = 'purchase-' . $purchase->id;
                 $notifications[] = [
-                    'id'      => $key,
-                    'type'    => 'info',
-                    'title'   => 'Purchase Received',
-                    'message' => "Purchase order {$purchase->reference} received from " .
-                                 ($purchase->supplier?->name ?? 'N/A'),
-                    'time'    => $this->timeAgo($purchase->created_at),
-                    'read'    => $readKeys->has($key),
+                    'id'         => $key,
+                    'type'       => 'info',
+                    'title'      => 'Purchase Received',
+                    'message'    => "Purchase order {$purchase->reference} received from " .
+                                   ($purchase->supplier?->name ?? 'N/A'),
+                    'time'       => $this->timeAgo($purchase->created_at),
+                    'created_at' => $purchase->created_at?->timestamp ?? 0,
+                    'read'       => $readKeys->has($key),
                 ];
             });
 
@@ -87,12 +90,13 @@ class NotificationController extends Controller
             ->each(function ($return) use (&$notifications, $readKeys) {
                 $key = 'pr-' . $return->id;
                 $notifications[] = [
-                    'id'      => $key,
-                    'type'    => 'warning',
-                    'title'   => 'Pending Purchase Return',
-                    'message' => "Purchase return {$return->reference} is pending approval",
-                    'time'    => $this->timeAgo($return->created_at),
-                    'read'    => $readKeys->has($key),
+                    'id'         => $key,
+                    'type'       => 'warning',
+                    'title'      => 'Pending Purchase Return',
+                    'message'    => "Purchase return {$return->reference} is pending approval",
+                    'time'       => $this->timeAgo($return->created_at),
+                    'created_at' => $return->created_at?->timestamp ?? 0,
+                    'read'       => $readKeys->has($key),
                 ];
             });
 
@@ -102,14 +106,23 @@ class NotificationController extends Controller
             ->each(function ($return) use (&$notifications, $readKeys) {
                 $key = 'sr-' . $return->id;
                 $notifications[] = [
-                    'id'      => $key,
-                    'type'    => 'warning',
-                    'title'   => 'Pending Sale Return',
-                    'message' => "Sale return {$return->reference} is pending approval",
-                    'time'    => $this->timeAgo($return->created_at),
-                    'read'    => $readKeys->has($key),
+                    'id'         => $key,
+                    'type'       => 'warning',
+                    'title'      => 'Pending Sale Return',
+                    'message'    => "Sale return {$return->reference} is pending approval",
+                    'time'       => $this->timeAgo($return->created_at),
+                    'created_at' => $return->created_at?->timestamp ?? 0,
+                    'read'       => $readKeys->has($key),
                 ];
             });
+
+        // Sort: unread first, then by created_at descending within each group
+        usort($notifications, function ($a, $b) {
+            if ($a['read'] !== $b['read']) {
+                return $a['read'] ? 1 : -1; // unread (false) comes first
+            }
+            return $b['created_at'] <=> $a['created_at']; // newer first
+        });
 
         return response()->json(['success' => 1, 'data' => $notifications], 200);
     }
